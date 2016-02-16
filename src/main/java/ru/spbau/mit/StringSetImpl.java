@@ -30,12 +30,12 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        int res = 0;
+        int count = 0;
         for (String str : set) {
             if (str.startsWith(prefix)) {
-                res++;
+                count++;
             }
         }
-        return res;
+        return count;
     }
 }
