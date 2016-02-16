@@ -1,14 +1,14 @@
-.class
+*.class
 
 # Package Files #
-.jar
-.war
-.ear
+*.jar
+*.war
+*.ear
 
 # Intellij project files
-.iml
-.ipr
-.iws
+*.iml
+*.ipr
+*.iws
 .idea/
 
 target/**
