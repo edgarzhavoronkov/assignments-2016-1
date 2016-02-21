@@ -41,7 +41,7 @@ public class StringSetImpl implements StringSet {
                 null,
                 new HashMap<Character, StringSetNode>(),
                 false);
-        root.prefixCounter = 1;
+        root.prefixCounter = 0;
     }
 
     @Override
@@ -121,6 +121,9 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
+        if (prefix.equals("")) {
+            return size + 1;
+        }
         StringSetNode currentNode = getLastNode(prefix);
         return currentNode.prefixCounter;
     }
