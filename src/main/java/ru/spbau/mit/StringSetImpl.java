@@ -75,6 +75,7 @@ public class StringSetImpl implements StringSet {
                 currentNode.prefixCounter += 1;
                 currentNode = currentNode.parent;
             }
+            currentNode.prefixCounter += 1;
             return true;
         }
 
@@ -107,6 +108,7 @@ public class StringSetImpl implements StringSet {
                 currentNode.prefixCounter -= 1;
                 currentNode = currentNode.parent;
             }
+            currentNode.prefixCounter -= 1;
             size--;
             return true;
         } else {
@@ -121,11 +123,8 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public int howManyStartsWithPrefix(String prefix) {
-        if (prefix.equals("")) {
-            return size + 1;
-        }
         StringSetNode currentNode = getLastNode(prefix);
-        return currentNode.prefixCounter;
+        return prefix.equals("") ? currentNode.prefixCounter + 1 : currentNode.prefixCounter;
     }
 
     private StringSetNode getLastNode(String element) {
