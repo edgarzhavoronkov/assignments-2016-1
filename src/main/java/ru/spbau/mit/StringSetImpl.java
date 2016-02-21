@@ -124,7 +124,7 @@ public class StringSetImpl implements StringSet {
     @Override
     public int howManyStartsWithPrefix(String prefix) {
         StringSetNode currentNode = getLastNode(prefix);
-        return prefix.equals("") ? currentNode.prefixCounter + 1 : currentNode.prefixCounter;
+        return currentNode.prefixCounter;
     }
 
     private StringSetNode getLastNode(String element) {
