@@ -41,7 +41,7 @@ public class StringSetImpl implements StringSet {
                 null,
                 new HashMap<Character, StringSetNode>(),
                 false);
-        root.prefixCounter = 0;
+        root.prefixCounter = 1;
     }
 
     @Override
