@@ -103,6 +103,11 @@ public class StringSetImpl implements StringSet {
         if (this.contains(element)) {
             StringSetNode currentNode = getLastNode(element);
             currentNode.isFinal = false;
+            while (currentNode.parent != null) {
+                currentNode.prefixCounter -= 1;
+                currentNode = currentNode.parent;
+            }
+            size--;
             return true;
         } else {
             return false;
