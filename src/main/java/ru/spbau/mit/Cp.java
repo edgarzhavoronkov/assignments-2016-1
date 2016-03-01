@@ -26,10 +26,9 @@ public class Cp {
                 );
 
 
-                byte[] buffer = new byte[MAX_SIZE];
-                while (inputStream.read(buffer) != -1) {
+                while (inputStream.available() > 0) {
+                    char buffer = (char) inputStream.read();
                     outputStream.write(buffer);
-                    buffer = new byte[MAX_SIZE];
                 }
 
                 inputStream.close();
