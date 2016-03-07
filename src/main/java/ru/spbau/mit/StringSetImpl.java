@@ -108,6 +108,7 @@ public class StringSetImpl implements StringSet {
         public void setChild(char c, StringSetNode val) {
             if (Character.isLowerCase(c)) {
                 children[c - 'a'] = val;
+                return;
             }
             children[ALPHABET_SIZE + Character.toLowerCase(c) - 'a'] = val;
         }
