@@ -13,7 +13,7 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public boolean add(String element) {
-        if (this.contains(element)) {
+        if (contains(element)) {
             return false;
         }
         StringSetNode currentNode = getLastNode(element, Action.ADD);
@@ -30,7 +30,7 @@ public class StringSetImpl implements StringSet {
 
     @Override
     public boolean remove(String element) {
-        if (!this.contains(element)) {
+        if (!contains(element)) {
             return false;
         }
         StringSetNode currentNode = getLastNode(element, Action.REMOVE);
@@ -55,30 +55,26 @@ public class StringSetImpl implements StringSet {
         int len = element.length();
         for (int i = 0; i < len && currentNode != null; ++i) {
             char currentSymbol = element.charAt(i);
+            StringSetNode child = currentNode.getChild(currentSymbol);
             switch (action) {
-                case ADD: {
+                case ADD:
                     currentNode.setSize(currentNode.getSize() + 1);
-                    StringSetNode child = currentNode.getChild(currentSymbol);
                     if (child == null) {
                         child = new StringSetNode();
                         currentNode.setChild(currentSymbol, child);
                     }
                     currentNode = child;
                     break;
-                }
-                case REMOVE: {
+                case REMOVE:
                     currentNode.setSize(currentNode.getSize() - 1);
-                    StringSetNode child = currentNode.getChild(currentSymbol);
                     if (child.getSize() == 0) {
                         currentNode.setChild(currentSymbol, null);
                     }
                     currentNode = child;
                     break;
-                }
-                case DEFAULT: {
-                    currentNode = currentNode.getChild(currentSymbol);
+                case DEFAULT:
+                    currentNode = child;
                     break;
-                }
             }
         }
         return currentNode;
@@ -94,8 +90,8 @@ public class StringSetImpl implements StringSet {
         private int size;
 
         public StringSetNode() {
-            this.isFinal = false;
-            this.size = 0;
+            isFinal = false;
+            size = 0;
         }
 
         public StringSetNode getChild(char c) {
