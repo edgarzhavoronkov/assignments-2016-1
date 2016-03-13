@@ -63,19 +63,17 @@ public class StringSetImpl implements StringSet {
                         child = new StringSetNode();
                         currentNode.setChild(currentSymbol, child);
                     }
-                    currentNode = child;
                     break;
                 case REMOVE:
                     currentNode.setSize(currentNode.getSize() - 1);
                     if (child.getSize() == 0) {
                         currentNode.setChild(currentSymbol, null);
                     }
-                    currentNode = child;
                     break;
                 case DEFAULT:
-                    currentNode = child;
                     break;
             }
+            currentNode = child;
         }
         return currentNode;
     }
