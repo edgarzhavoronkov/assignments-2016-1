@@ -150,14 +150,14 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         public void serialize(OutputStream out) {
             try {
                 byte[] bytesToWrite = new byte[BUFFER_SIZE];
-                for (int i = 0; i < Integer.BYTES; ++i) {
-                    bytesToWrite[i] = (byte) ((size >> (Byte.SIZE * (Integer.BYTES - i - 1))) & BYTE_MODULO);
+                for (int i = 0; i < INTEGER_BYTES; ++i) {
+                    bytesToWrite[i] = (byte) ((size >> (Byte.SIZE * (INTEGER_BYTES - i - 1))) & BYTE_MODULO);
                 }
 
                 if (isFinal) {
-                    bytesToWrite[Integer.BYTES] = BYTE_TRUE;
+                    bytesToWrite[INTEGER_BYTES] = BYTE_TRUE;
                 } else {
-                    bytesToWrite[Integer.BYTES] = BYTE_FALSE;
+                    bytesToWrite[INTEGER_BYTES] = BYTE_FALSE;
                 }
 
                 out.write(bytesToWrite);
