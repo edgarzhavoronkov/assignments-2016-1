@@ -98,7 +98,8 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
     private static class StringSetNode implements StreamSerializable {
         private static final int ALPHABET_SIZE = 'z' - 'a' + 1;
-        private static final int BUFFER_SIZE = Integer.BYTES + 1;
+        private static final int INTEGER_BYTES = 4;
+        private static final int BUFFER_SIZE = INTEGER_BYTES + 1;
 
         private static final byte BYTE_TRUE = 0x01;
         private static final byte BYTE_FALSE = 0x00;
@@ -154,9 +155,9 @@ public class StringSetImpl implements StringSet, StreamSerializable {
                 }
 
                 if (isFinal) {
-                    bytesToWrite[BUFFER_SIZE - 1] = BYTE_TRUE;
+                    bytesToWrite[Integer.BYTES] = BYTE_TRUE;
                 } else {
-                    bytesToWrite[BUFFER_SIZE - 1] = BYTE_FALSE;
+                    bytesToWrite[Integer.BYTES] = BYTE_FALSE;
                 }
 
                 out.write(bytesToWrite);
@@ -179,9 +180,9 @@ public class StringSetImpl implements StringSet, StreamSerializable {
                 byte[] buffer = new byte[1];
 
                 size = 0;
-                for (int i = 0; i < BUFFER_SIZE - 1; ++i) {
+                for (int i = 0; i < INTEGER_BYTES; ++i) {
                     in.read(buffer);
-                    size |= ((BYTE_MODULO & buffer[0]) << Byte.SIZE * (Integer.BYTES - i - 1));
+                    size |= ((BYTE_MODULO & buffer[0]) << Byte.SIZE * (INTEGER_BYTES - i - 1));
                 }
 
                 in.read(buffer);
