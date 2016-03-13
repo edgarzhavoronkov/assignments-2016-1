@@ -86,7 +86,7 @@ public class StringSetImpl implements StringSet, StreamSerializable {
                         currentNode.setChild(currentSymbol, null);
                     }
                     break;
-                case DEFAULT:
+                default:
                     break;
             }
             currentNode = child;
@@ -97,14 +97,19 @@ public class StringSetImpl implements StringSet, StreamSerializable {
     private enum Action {ADD, REMOVE, DEFAULT}
 
     private static class StringSetNode implements StreamSerializable {
-        private final static int ALPHABET_SIZE = 'z' - 'a' + 1;
-        private final static int BUFFER_SIZE = Integer.BYTES + 1;
+        private static final int ALPHABET_SIZE = 'z' - 'a' + 1;
+        private static final int BUFFER_SIZE = Integer.BYTES + 1;
+
+        private static final byte BYTE_TRUE = 0x01;
+        private static final byte BYTE_FALSE = 0x00;
+
+        private static final int BYTE_MODULO = 0xff;
 
         private int size;
         private boolean isFinal;
         private StringSetNode[] children = new StringSetNode[2 * ALPHABET_SIZE];
 
-        public StringSetNode() {
+        StringSetNode() {
             size = 0;
             isFinal = false;
         }
@@ -143,20 +148,24 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         @Override
         public void serialize(OutputStream out) {
             try {
-                byte[] bytesToWrite = new byte[]{
-                        (byte) ((size >> 24) & 0xff),
-                        (byte) ((size >> 16) & 0xff),
-                        (byte) ((size >> 8) & 0xff),
-                        (byte) ((size) & 0xff),
-                        (byte) (isFinal ? 0x01 : 0x00)
-                };
+                byte[] bytesToWrite = new byte[BUFFER_SIZE];
+                for (int i = 0; i < Integer.BYTES; ++i) {
+                    bytesToWrite[i] = (byte) ((size >> (Byte.SIZE * (Integer.BYTES - i - 1))) & BYTE_MODULO);
+                }
+
+                if (isFinal) {
+                    bytesToWrite[BUFFER_SIZE - 1] = BYTE_TRUE;
+                } else {
+                    bytesToWrite[BUFFER_SIZE - 1] = BYTE_FALSE;
+                }
+
                 out.write(bytesToWrite);
                 for (StringSetNode node : children) {
                     if (node != null) {
-                        out.write(new byte[]{0x10});
+                        out.write(new byte[]{BYTE_TRUE});
                         node.serialize(out);
                     } else {
-                        out.write(new byte[]{0x11});
+                        out.write(new byte[]{BYTE_FALSE});
                     }
                 }
             } catch (IOException e) {
@@ -167,19 +176,20 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         @Override
         public void deserialize(InputStream in) {
             try {
-                byte[] buffer1 = new byte[BUFFER_SIZE];
-                //FIXME: use one buffer?
-                byte[] buffer2 = new byte[1];
-                in.read(buffer1);
-                size = (0xff & buffer1[0]) << 24 |
-                        (0xff & buffer1[1]) << 16 |
-                        (0xff & buffer1[2]) << 8 |
-                        (0xff & buffer1[3]);
-                isFinal = buffer1[4] == 0x01;
+                byte[] buffer = new byte[1];
+
+                size = 0;
+                for (int i = 0; i < BUFFER_SIZE - 1; ++i) {
+                    in.read(buffer);
+                    size |= ((BYTE_MODULO & buffer[0]) << Byte.SIZE * (Integer.BYTES - i - 1));
+                }
+
+                in.read(buffer);
+                isFinal = buffer[0] == BYTE_TRUE;
 
                 for (int i = 0; i < 2 * ALPHABET_SIZE; ++i) {
-                    in.read(buffer2);
-                    if (buffer2[0] == 0x10) {
+                    in.read(buffer);
+                    if (buffer[0] == BYTE_TRUE) {
                         children[i] = new StringSetNode();
                         children[i].deserialize(in);
                     }
