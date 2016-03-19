@@ -1,8 +1,6 @@
 package ru.spbau.mit;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Created by edgar
@@ -98,13 +96,6 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
     private static class StringSetNode implements StreamSerializable {
         private static final int ALPHABET_SIZE = 'z' - 'a' + 1;
-        private static final int INTEGER_BYTES = 4;
-        private static final int BUFFER_SIZE = INTEGER_BYTES + 1;
-
-        private static final byte BYTE_TRUE = 0x01;
-        private static final byte BYTE_FALSE = 0x00;
-
-        private static final int BYTE_MODULO = 0xff;
 
         private int size;
         private boolean isFinal;
@@ -115,14 +106,14 @@ public class StringSetImpl implements StringSet, StreamSerializable {
             isFinal = false;
         }
 
-        public StringSetNode getChild(char c) {
+        StringSetNode getChild(char c) {
             if (Character.isLowerCase(c)) {
                 return children[c - 'a'];
             }
             return children[ALPHABET_SIZE + Character.toLowerCase(c) - 'a'];
         }
 
-        public void setChild(char c, StringSetNode val) {
+        void setChild(char c, StringSetNode val) {
             if (Character.isLowerCase(c)) {
                 children[c - 'a'] = val;
                 return;
@@ -130,45 +121,26 @@ public class StringSetImpl implements StringSet, StreamSerializable {
             children[ALPHABET_SIZE + Character.toLowerCase(c) - 'a'] = val;
         }
 
-        public int getSize() {
+        int getSize() {
             return size;
         }
 
-        public boolean isFinal() {
+        boolean isFinal() {
             return isFinal;
         }
 
-        public void setSize(int size) {
+        void setSize(int size) {
             this.size = size;
         }
 
-        public void setFinal(boolean aFinal) {
+        void setFinal(boolean aFinal) {
             isFinal = aFinal;
         }
 
         @Override
         public void serialize(OutputStream out) {
             try {
-                byte[] bytesToWrite = new byte[BUFFER_SIZE];
-                for (int i = 0; i < INTEGER_BYTES; ++i) {
-                    bytesToWrite[i] = (byte) ((size >> (Byte.SIZE * (INTEGER_BYTES - i - 1))) & BYTE_MODULO);
-                }
-
-                if (isFinal) {
-                    bytesToWrite[INTEGER_BYTES] = BYTE_TRUE;
-                } else {
-                    bytesToWrite[INTEGER_BYTES] = BYTE_FALSE;
-                }
-
-                out.write(bytesToWrite);
-                for (StringSetNode node : children) {
-                    if (node != null) {
-                        out.write(new byte[]{BYTE_TRUE});
-                        node.serialize(out);
-                    } else {
-                        out.write(new byte[]{BYTE_FALSE});
-                    }
-                }
+                doSerialize(out);
             } catch (IOException e) {
                 throw new SerializationException();
             }
@@ -177,26 +149,36 @@ public class StringSetImpl implements StringSet, StreamSerializable {
         @Override
         public void deserialize(InputStream in) {
             try {
-                byte[] buffer = new byte[1];
-
-                size = 0;
-                for (int i = 0; i < INTEGER_BYTES; ++i) {
-                    in.read(buffer);
-                    size |= ((BYTE_MODULO & buffer[0]) << Byte.SIZE * (INTEGER_BYTES - i - 1));
-                }
-
-                in.read(buffer);
-                isFinal = buffer[0] == BYTE_TRUE;
-
-                for (int i = 0; i < 2 * ALPHABET_SIZE; ++i) {
-                    in.read(buffer);
-                    if (buffer[0] == BYTE_TRUE) {
-                        children[i] = new StringSetNode();
-                        children[i].deserialize(in);
-                    }
-                }
+                doDeserialize(in);
             } catch (IOException e) {
                 throw new SerializationException();
+            }
+        }
+
+        private void doSerialize(OutputStream out) throws IOException {
+            DataOutputStream dos = new DataOutputStream(out);
+            dos.writeInt(size);
+            dos.writeBoolean(isFinal);
+            for (StringSetNode node : children) {
+                if (node != null) {
+                    dos.writeBoolean(true);
+                    node.serialize(out);
+                } else {
+                    dos.writeBoolean(false);
+                }
+            }
+        }
+
+        private void doDeserialize(InputStream in) throws IOException {
+            DataInputStream dis = new DataInputStream(in);
+            size = dis.readInt();
+            isFinal = dis.readBoolean();
+            for (int i = 0; i < 2 * ALPHABET_SIZE; ++i) {
+                boolean nodeExists = dis.readBoolean();
+                if (nodeExists) {
+                    children[i] = new StringSetNode();
+                    children[i].deserialize(in);
+                }
             }
         }
     }
