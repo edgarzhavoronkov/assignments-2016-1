@@ -157,7 +157,6 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
         private void doSerialize(OutputStream out) throws IOException {
             DataOutputStream dos = new DataOutputStream(out);
-            dos.writeInt(size);
             dos.writeBoolean(isFinal);
             for (StringSetNode node : children) {
                 if (node != null) {
@@ -171,13 +170,16 @@ public class StringSetImpl implements StringSet, StreamSerializable {
 
         private void doDeserialize(InputStream in) throws IOException {
             DataInputStream dis = new DataInputStream(in);
-            size = dis.readInt();
+            size = 0;
             isFinal = dis.readBoolean();
             for (int i = 0; i < 2 * ALPHABET_SIZE; ++i) {
                 boolean nodeExists = dis.readBoolean();
                 if (nodeExists) {
                     children[i] = new StringSetNode();
                     children[i].deserialize(in);
+                    if (children[i].isFinal) {
+                        size++;
+                    }
                 }
             }
         }
