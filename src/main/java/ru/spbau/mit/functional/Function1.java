@@ -8,8 +8,6 @@ package ru.spbau.mit.functional;
 public abstract class Function1<T, R> {
     public abstract R apply(T t);
 
-    //  f         g       g(f(x))
-    //(t->r) -> (r->c) -> (t->c)
     public <C> Function1<T, C> compose(final Function1<? super R, C> g) {
         return new Function1<T, C>() {
             @Override

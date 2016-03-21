@@ -6,14 +6,14 @@ package ru.spbau.mit.functional;
  */
 
 public abstract class Predicate<T> extends Function1<T, Boolean> {
-    static final Predicate<?> ALWAYS_TRUE = new Predicate<Object>() {
+    public static final Predicate<Object> ALWAYS_TRUE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object o) {
             return true;
         }
     };
 
-    static final Predicate<?> ALWAYS_FALSE = new Predicate<Object>() {
+    public static final Predicate<Object> ALWAYS_FALSE = new Predicate<Object>() {
         @Override
         public Boolean apply(Object o) {
             return false;
@@ -22,7 +22,7 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
 
     public abstract Boolean apply(T t);
 
-    public Predicate<T> or(final Predicate<T> other) {
+    public Predicate<T> or(final Predicate<? super T> other) {
         return new Predicate<T>() {
             @Override
             public Boolean apply(T t) {
@@ -31,7 +31,7 @@ public abstract class Predicate<T> extends Function1<T, Boolean> {
         };
     }
 
-    public Predicate<T> and(final Predicate<T> other) {
+    public Predicate<T> and(final Predicate<? super T> other) {
         return new Predicate<T>() {
             @Override
             public Boolean apply(T t) {

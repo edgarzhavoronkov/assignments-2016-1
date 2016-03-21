@@ -1,4 +1,4 @@
-package ru.spbau.mit.Collections;
+package ru.spbau.mit.collections;
 
 import ru.spbau.mit.functional.Function1;
 import ru.spbau.mit.functional.Function2;
@@ -17,7 +17,7 @@ public final class Collections  {
     private Collections() {
     }
 
-    static <T, R> Collection<R> map(Function1<T, R> f, Iterable<T> a) {
+    public static <T, R> Collection<R> map(Function1<? super T, R> f, Iterable<T> a) {
         Collection<R> res = new ArrayList<>();
         for (T t: a) {
             res.add(f.apply(t));
@@ -25,7 +25,7 @@ public final class Collections  {
         return res;
     }
 
-    static <T> Collection<T> filter(Predicate<T> p, Iterable<T> a) {
+    public static <T> Collection<T> filter(Predicate<? super T> p, Iterable<T> a) {
         Collection<T> res = new ArrayList<>();
         for (T t : a) {
             if (p.apply(t)) {
@@ -35,7 +35,7 @@ public final class Collections  {
         return res;
     }
 
-    static <T> Collection<T> takeWhile(Predicate<T> p, Iterable<T> a) {
+    public static <T> Collection<T> takeWhile(Predicate<? super T> p, Iterable<T> a) {
         Collection<T> res = new ArrayList<>();
         for (T t : a) {
             if (p.apply(t)) {
@@ -47,19 +47,11 @@ public final class Collections  {
         return res;
     }
 
-    static <T> Collection<T> takeUnless(Predicate<T> p, Iterable<T> a) {
-        Collection<T> res = new ArrayList<>();
-        for (T t : a) {
-            if (!p.apply(t)) {
-                res.add(t);
-            } else {
-                break;
-            }
-        }
-        return res;
+    public static <T> Collection<T> takeUnless(Predicate<? super T> p, Iterable<T> a) {
+        return takeWhile(p.not(), a);
     }
 
-    static <A, B> B foldr(Function2<A, B, B> fun, B ini, Iterable<A> col) {
+    public static <A, B> B foldr(Function2<? super A, ? super B, B> fun, B ini, Iterable<A> col) {
         Iterator<A> iter = col.iterator();
         if (iter.hasNext()) {
             return helper(fun, ini, iter);
@@ -67,16 +59,16 @@ public final class Collections  {
         return ini;
     }
 
-    private static <A, B> B helper(Function2<A, B, B> fun, B ini, Iterator<A> it) {
+    private static <A, B> B helper(Function2<? super A, ? super B, B> fun, B ini, Iterator<A> it) {
         A a = it.next();
         B b = ini;
         if (it.hasNext()) {
-            return helper(fun, ini, it);
+            b = helper(fun, ini, it);
         }
         return fun.apply(a, b);
     }
 
-    static <A, B> B foldl(Function2<B, A, B> fun, B ini, Iterable<A> col) {
+    public static <A, B> B foldl(Function2<? super B, ? super A, B> fun, B ini, Iterable<A> col) {
         for (A value : col) {
             ini = fun.apply(ini, value);
         }

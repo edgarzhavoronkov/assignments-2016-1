@@ -17,7 +17,7 @@ public abstract class Function2<T1, T2, R> {
         };
     }
 
-    public Function1<T2, R> bind1(final T1 t1) {
+    public <T extends T1> Function1<T2, R> bind1(final T t1) {
         return new Function1<T2, R>() {
             @Override
             public R apply(T2 t2) {
@@ -26,7 +26,7 @@ public abstract class Function2<T1, T2, R> {
         };
     }
 
-    public Function1<T1, R> bind2(final T2 t2) {
+    public <T extends T2> Function1<T1, R> bind2(final T t2) {
         return new Function1<T1, R>() {
             @Override
             public R apply(T1 t1) {
@@ -35,11 +35,11 @@ public abstract class Function2<T1, T2, R> {
         };
     }
 
-    public Function1<T2, Function1<T1, R>> curry() {
-        return new Function1<T2, Function1<T1, R>>() {
+    public Function1<T1, Function1<T2, R>> curry() {
+        return new Function1<T1, Function1<T2, R>>() {
             @Override
-            public Function1<T1, R> apply(T2 t2) {
-                return Function2.this.bind2(t2);
+            public Function1<T2, R> apply(T1 t1) {
+                return Function2.this.bind1(t1);
             }
         };
     }
