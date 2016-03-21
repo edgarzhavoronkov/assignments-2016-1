@@ -172,14 +172,15 @@ public class StringSetImpl implements StringSet, StreamSerializable {
             DataInputStream dis = new DataInputStream(in);
             size = 0;
             isFinal = dis.readBoolean();
+            if (isFinal) {
+                size++;
+            }
             for (int i = 0; i < 2 * ALPHABET_SIZE; ++i) {
                 boolean nodeExists = dis.readBoolean();
                 if (nodeExists) {
                     children[i] = new StringSetNode();
                     children[i].deserialize(in);
-                    if (children[i].isFinal) {
-                        size++;
-                    }
+                    size += children[i].size;
                 }
             }
         }
