@@ -88,11 +88,12 @@ public class TestFunction2 {
         Function1<Integer, Function1<Integer, Integer>> sumCurry = sum.curry();
         Function1<Integer, Function1<Integer, Integer>> multCurry = mult.curry();
 
+        assertNotNull(sumCurry);
+        assertNotNull(multCurry);
+
         Function1<Integer, Integer> plusTwo = sumCurry.apply(2);
         Function1<Integer, Integer> multTwo = multCurry.apply(2);
 
-        assertNotNull(sumCurry);
-        assertNotNull(multCurry);
         assertNotNull(plusTwo);
         assertNotNull(multTwo);
 
