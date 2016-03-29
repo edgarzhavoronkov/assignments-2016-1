@@ -12,9 +12,6 @@ import static org.junit.Assert.assertNotNull;
  */
 
 public class TestFunction1 {
-    private static final Integer EIGHT = 8;
-    private static final Integer TEN = 10;
-
     private static Function1<Integer, Integer> id = new Function1<Integer, Integer>() {
         @Override
         public Integer apply(Integer integer) {
@@ -45,13 +42,13 @@ public class TestFunction1 {
 
     @Test
     public void testApply() {
-        assertEquals(EIGHT, id.apply(EIGHT));
-        assertEquals(TEN, id.apply(TEN));
+        assertEquals(8, (int) id.apply(8));
+        assertEquals(10, (int) id.apply(10));
 
-        assertEquals(TEN, plusTwo.apply(EIGHT));
+        assertEquals(10, (int) plusTwo.apply(8));
 
-        assertEquals("8", toStr.apply(EIGHT));
-        assertEquals("8.0", toStr.apply((double) EIGHT));
+        assertEquals("8", toStr.apply(8));
+        assertEquals("8.0", toStr.apply((double) 8));
     }
 
     @Test
@@ -62,7 +59,7 @@ public class TestFunction1 {
         assertNotNull(idToStrCmps);
         assertNotNull(plusIdCmps);
 
-        assertEquals("8", idToStrCmps.apply(EIGHT));
-        assertEquals(TEN, plusIdCmps.apply(EIGHT));
+        assertEquals("8", idToStrCmps.apply(8));
+        assertEquals(10, (int) plusIdCmps.apply(8));
     }
 }

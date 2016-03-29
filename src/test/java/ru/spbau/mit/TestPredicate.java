@@ -11,25 +11,24 @@ import static org.junit.Assert.*;
  */
 
 public class TestPredicate {
-    private static final Integer FOURTY_ONE = 41;
-    private static final Integer FOURTY_TWO = 42;
-    private static final Integer FIFTY_TWO = 52;
-    private static final Integer FIFTY_ONE = 51;
-
-    private static final Integer ONE = 1;
-    private static final Integer TW0 = 2;
-
     private static Predicate<Integer> greaterThanFourtyTwo = new Predicate<Integer>() {
         @Override
         public Boolean apply(Integer integer) {
-            return integer > FOURTY_TWO;
+            return integer > 42;
         }
     };
 
     private static Predicate<Integer> isOdd = new Predicate<Integer>() {
         @Override
         public Boolean apply(Integer integer) {
-            return integer % TW0 == ONE;
+            return integer % 2 == 1;
+        }
+    };
+
+    private static Predicate<Integer> dangerousPredicate = new Predicate<Integer>() {
+        @Override
+        public Boolean apply(Integer integer) {
+            return integer / 0 == 0;
         }
     };
 
@@ -40,9 +39,9 @@ public class TestPredicate {
         assertNotNull(trve);
 
         assertTrue(trve.apply("42"));
-        assertTrue(trve.apply(FOURTY_ONE));
-        assertTrue(trve.apply(FIFTY_TWO));
-        assertTrue(trve.apply(FOURTY_TWO));
+        assertTrue(trve.apply(41));
+        assertTrue(trve.apply(52));
+        assertTrue(trve.apply(42.0));
     }
 
     @Test
@@ -52,9 +51,9 @@ public class TestPredicate {
         assertNotNull(notTrve);
 
         assertFalse(notTrve.apply("42"));
-        assertFalse(notTrve.apply(FOURTY_ONE));
-        assertFalse(notTrve.apply(FIFTY_TWO));
-        assertFalse(notTrve.apply(FOURTY_TWO));
+        assertFalse(notTrve.apply(41));
+        assertFalse(notTrve.apply(52));
+        assertFalse(notTrve.apply(42.0));
     }
 
     @Test
@@ -69,11 +68,20 @@ public class TestPredicate {
 
         assertNotNull(greaterOrOdd);
 
-        assertTrue(greaterOrOdd.apply(FIFTY_TWO));
-        assertTrue(greaterOrOdd.apply(FOURTY_ONE));
-        assertFalse(greaterOrOdd.apply(FOURTY_TWO));
+        assertTrue(greaterOrOdd.apply(52));
+        assertTrue(greaterOrOdd.apply(41));
+        assertFalse(greaterOrOdd.apply(42));
 
-        assertTrue(greaterThanFourtyTwo.or(Predicate.ALWAYS_TRUE).apply(FOURTY_TWO));
+        assertTrue(greaterThanFourtyTwo.or(Predicate.ALWAYS_TRUE).apply(42));
+    }
+
+    @Test
+    public void testLazyOr() {
+        Predicate<Integer> lazyPredicate = greaterThanFourtyTwo.or(dangerousPredicate);
+
+        assertNotNull(lazyPredicate);
+
+        assertTrue(lazyPredicate.apply(43));
     }
 
     @Test
@@ -82,12 +90,21 @@ public class TestPredicate {
 
         assertNotNull(greaterAndOdd);
 
-        assertFalse(greaterAndOdd.apply(FIFTY_TWO));
-        assertFalse(greaterAndOdd.apply(FOURTY_ONE));
-        assertFalse(greaterAndOdd.apply(FOURTY_TWO));
-        assertTrue(greaterAndOdd.apply(FIFTY_ONE));
+        assertFalse(greaterAndOdd.apply(52));
+        assertFalse(greaterAndOdd.apply(41));
+        assertFalse(greaterAndOdd.apply(42));
+        assertTrue(greaterAndOdd.apply(51));
 
-        assertFalse(greaterThanFourtyTwo.and(Predicate.ALWAYS_FALSE).apply(FIFTY_TWO));
+        assertFalse(greaterThanFourtyTwo.and(Predicate.ALWAYS_FALSE).apply(52));
+    }
+
+    @Test
+    public void testLazyAnd() {
+        Predicate<Integer> lazyPredicate = greaterThanFourtyTwo.and(dangerousPredicate);
+
+        assertNotNull(lazyPredicate);
+
+        assertFalse(lazyPredicate.apply(41));
     }
 
     @Test
@@ -98,7 +115,7 @@ public class TestPredicate {
         assertNotNull(lessOrEqualThanFourtyTwo);
         assertNotNull(isEven);
 
-        assertTrue(lessOrEqualThanFourtyTwo.apply(FOURTY_ONE));
-        assertTrue(isEven.apply(FOURTY_TWO));
+        assertTrue(lessOrEqualThanFourtyTwo.apply(41));
+        assertTrue(isEven.apply(42));
     }
 }
