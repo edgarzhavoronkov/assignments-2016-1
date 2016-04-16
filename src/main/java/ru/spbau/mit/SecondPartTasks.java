@@ -64,23 +64,17 @@ public final class SecondPartTasks {
     // Дано отображение из имени автора в список с содержанием его произведений.
     // Надо вычислить, чья общая длина произведений наибольшая.
     public static String findPrinter(Map<String, List<String>> compositions) {
-        return compositions
-                .entrySet()
+        return compositions.entrySet()
                 .stream()
-                .collect(
-                        Collectors.toMap(
-                                Map.Entry::getKey,
-                                entry -> entry
-                                        .getValue()
+                .max(
+                        Comparator.comparing(
+                                e -> e.getValue()
                                         .stream()
-                                        .mapToInt(String::length)
-                                        .sum()
+                                        .collect(
+                                                Collectors.summingInt(String::length)
+                                        )
                         )
-                )
-                .entrySet()
-                .stream()
-                .max(Comparator.comparingInt(Map.Entry::getValue))
-                .map(Map.Entry::getKey).get();
+                ).get().getKey();
     }
 
     // Вы крупный поставщик продуктов. Каждая торговая сеть делает вам заказ в виде Map<Товар, Количество>.

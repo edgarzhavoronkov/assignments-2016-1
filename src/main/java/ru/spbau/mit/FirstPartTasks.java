@@ -47,7 +47,9 @@ public final class FirstPartTasks {
                                 track -> track.getRating() > THRESHOLD_RATING
                         )
         )
-                .sorted(((album1, album2) -> album1.getName().compareTo(album2.getName())))
+                .sorted(
+                        Comparator.comparing(Album::getName)
+                )
                 .collect(Collectors.toList());
     }
 
@@ -84,51 +86,31 @@ public final class FirstPartTasks {
     // Альбом в котором максимум рейтинга минимален
     // (если в альбоме нет ни одного трека, считать, что максимум рейтинга в нем --- 0)
     public static Optional<Album> minMaxRating(Stream<Album> albums) {
-        return albums.collect(
-                Collectors.groupingBy(
-                        Function.identity(),
-                        Collectors.mapping(
-                                album -> album.getTracks()
+        return albums
+                .min(
+                        Comparator.comparing(
+                                a -> a.getTracks()
                                         .stream()
                                         .mapToInt(Track::getRating)
-                                        .max().orElse(0),
-                                Collectors.collectingAndThen(
-                                        Collectors.toList(),
-                                        l -> l.get(0)
-                                )
+                                        .max()
+                                        .orElse(0)
                         )
-                )
-        )
-                .entrySet()
-                .stream()
-                .min(Comparator.comparingInt(Map.Entry::getValue))
-                .map(Map.Entry::getKey);
+                );
 
     }
 
     // Список альбомов, отсортированный по убыванию среднего рейтинга его треков (0, если треков нет)
     public static List<Album> sortByAverageRating(Stream<Album> albums) {
-        return albums.collect(
-                Collectors.groupingBy(
-                        Function.identity(),
-                        Collectors.mapping(
-                                album -> album.getTracks()
+        return albums
+                .sorted(
+                        Comparator.comparing(
+                                a -> a.getTracks()
                                         .stream()
-                                        .mapToInt(Track::getRating)
-                                        .average()
-                                        .orElse(0),
-                                Collectors.collectingAndThen(
-                                        Collectors.toList(),
-                                        l -> l.get(0)
-                                )
+                                        .collect(
+                                                Collectors.averagingInt(Track::getRating)
+                                        ), Comparator.reverseOrder()
                         )
-                )
-        )
-                .entrySet()
-                .stream()
-                .sorted(Comparator.comparing(Map.Entry::getValue, Comparator.reverseOrder()))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                ).collect(Collectors.toList());
 
     }
 
@@ -146,6 +128,6 @@ public final class FirstPartTasks {
 
     // Вернуть поток из объектов класса 'clazz'
     public static <R> Stream<R> filterIsInstance(Stream<?> s, Class<R> clazz) {
-        return s.filter(clazz::isInstance).map(clazz::cast);
+        return (Stream<R>) s.filter(clazz::isInstance);
     }
 }
