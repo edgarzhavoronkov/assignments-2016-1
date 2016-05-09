@@ -62,8 +62,24 @@ public class ThreadPoolImplTest {
     @Test
     public void testThenApply() throws LightExecutionException {
         ThreadPool pool = new ThreadPoolImpl(1);
-        LightFuture<Integer> task = pool.submit(() -> 1);
-        LightFuture<Integer> pending = task.thenApply((x) -> x * 2);
+        LightFuture<Integer> task = pool.submit(
+                () -> {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {
+                    }
+                    return 1;
+                }
+        );
+        LightFuture<Integer> pending = task.thenApply(
+                (x) -> {
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ignored) {
+                    }
+                    return x * 2;
+                }
+        );
 
         assertFalse(task.isReady());
         assertFalse(pending.isReady());
