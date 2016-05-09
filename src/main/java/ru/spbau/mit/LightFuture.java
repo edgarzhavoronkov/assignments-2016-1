@@ -11,7 +11,7 @@ public interface LightFuture<R> {
      * @throws LightExecutionException if exception was thrown during task
      * execution
      */
-    R get() throws LightExecutionException, InterruptedException;
+    R get() throws LightExecutionException;
 
     <U> LightFuture<U> thenApply(Function<? super R, ? extends U> f);
 }
