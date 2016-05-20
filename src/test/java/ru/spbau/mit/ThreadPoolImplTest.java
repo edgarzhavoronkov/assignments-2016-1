@@ -2,9 +2,7 @@ package ru.spbau.mit;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -30,7 +28,7 @@ public class ThreadPoolImplTest {
         List<Integer> actual = tasks.stream().map((task) -> {
             try {
                 return task.get();
-            } catch (LightExecutionException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             return 0;
@@ -48,51 +46,69 @@ public class ThreadPoolImplTest {
                     throw new RuntimeException("Oops!");
                 }
         );
-        darkFuture.get();
+        try {
+            darkFuture.get();
+        } catch (InterruptedException e) {
+            fail();
+        }
     }
 
     @Test
     public void testSize() {
-        ThreadPoolImpl pool = new ThreadPoolImpl(10);
-        assertEquals(pool.size(), 10);
-        pool.shutdown();
-        assertEquals(pool.size(), 0);
+        Set<Long> ids = new HashSet<>();
+        List<LightFuture<Boolean>> tasks = new ArrayList<>();
+        ThreadPool pool = new ThreadPoolImpl(10);
+        for (int i = 0; i < 100; ++i) {
+            tasks.add(
+                    pool.submit(
+                            () -> {
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException ignored) {
+                                }
+                                return ids.add(Thread.currentThread().getId());
+                            }
+                    )
+            );
+        }
+
+        for (LightFuture lf : tasks) {
+            try {
+                lf.get();
+            } catch (LightExecutionException e) {
+                fail();
+            } catch (InterruptedException e) {
+                fail();
+            }
+        }
+
+        assertTrue(ids.size() >= 10);
     }
 
     @Test
     public void testThenApply() throws LightExecutionException {
-        ThreadPool pool = new ThreadPoolImpl(1);
+        ThreadPool pool = new ThreadPoolImpl(10);
         LightFuture<Integer> task = pool.submit(
-                () -> {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ignored) {
-                    }
-                    return 1;
-                }
+                () -> 1
         );
         LightFuture<Integer> pending = task.thenApply(
-                (x) -> {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException ignored) {
-                    }
-                    return x * 2;
-                }
+                (x) -> x * 2
         );
 
-        assertFalse(task.isReady());
-        assertFalse(pending.isReady());
+        Integer res;
+        try {
+            res = task.get();
+            assertEquals(1, (int) res);
+        } catch (InterruptedException e) {
+            fail();
+        }
 
-        Integer res = task.get();
-        assertTrue(task.isReady());
-        assertFalse(pending.isReady());
-        assertEquals(1, (int) res);
-
-        Integer pendingRes = pending.get();
-        assertTrue(task.isReady());
-        assertTrue(pending.isReady());
-        assertEquals(2, (int) pendingRes);
+        Integer pendingRes;
+        try {
+            pendingRes = pending.get();
+            assertEquals(2, (int) pendingRes);
+        } catch (InterruptedException ignored) {
+            fail();
+        }
     }
-
 }

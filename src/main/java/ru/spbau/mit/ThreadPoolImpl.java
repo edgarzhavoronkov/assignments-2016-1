@@ -8,9 +8,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ThreadPoolImpl implements ThreadPool {
-
     private final List<Thread> threads;
-    private final Queue<LightFutureImpl<?>> tasks;
+    private final Queue<LightFuture<?>> tasks;
 
     public ThreadPoolImpl(int n) {
         threads = new ArrayList<>();
@@ -21,14 +20,14 @@ public class ThreadPoolImpl implements ThreadPool {
                             () -> {
                                 try {
                                     while (!Thread.currentThread().isInterrupted()) {
-                                        LightFutureImpl<?> task;
+                                        LightFuture<?> task;
                                         synchronized (tasks) {
                                             while (tasks.isEmpty()) {
                                                 tasks.wait();
                                             }
                                             task = tasks.remove();
                                         }
-                                        task.execute();
+                                        ((LightFutureImpl<?>) task).execute();
                                     }
                                 } catch (InterruptedException e) {
                                     Thread.currentThread().interrupt();
@@ -39,16 +38,12 @@ public class ThreadPoolImpl implements ThreadPool {
         threads.forEach(Thread::start);
     }
 
-    public int size() {
-        return threads.size();
-    }
-
     @Override
     public <R> LightFuture<R> submit(Supplier<R> supplier) {
-        return addTask(createTask(supplier));
+        return addTask(new LightFutureImpl<>(supplier));
     }
 
-    private <R> LightFutureImpl<R> addTask(LightFutureImpl<R> task) {
+    private <R> LightFuture<R> addTask(LightFuture<R> task) {
         synchronized (tasks) {
             tasks.add(task);
             tasks.notify();
@@ -56,25 +51,21 @@ public class ThreadPoolImpl implements ThreadPool {
         return task;
     }
 
-    private <R> LightFutureImpl<R> createTask(Supplier<R> supplier) {
-        return new LightFutureImpl<R>() {
-            @Override
-            R compute() throws LightExecutionException {
-                return supplier.get();
-            }
-        };
-    }
-
-    private <R, U> LightFutureImpl<U> addPendingTask(
-            LightFutureImpl<R> argument,
+    private <R, U> LightFuture<U> createPendingTask(
+            LightFuture<R> argument,
             Function<? super R, ? extends U> f
     ) {
-        return new LightFutureImpl<U>() {
-            @Override
-            U compute() throws LightExecutionException {
-                return f.apply(argument.get());
-            }
-        };
+        return addTask(
+                new LightFutureImpl<>(
+                        () -> {
+                            try {
+                                return f.apply(argument.get());
+                            } catch (Exception e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                )
+        );
     }
 
     @Override
@@ -83,12 +74,16 @@ public class ThreadPoolImpl implements ThreadPool {
         threads.clear();
     }
 
-    private abstract class LightFutureImpl<R> implements LightFuture<R> {
+    private class LightFutureImpl<R> implements LightFuture<R> {
         private R result;
         private volatile boolean isReady = false;
         private LightExecutionException failureCause;
+        private Supplier<R> supplier;
+        private final List<LightFuture<?>> pendingTasks = new ArrayList<>();
 
-        private final List<LightFutureImpl<?>> pendingTasks = new ArrayList<>();
+        LightFutureImpl(Supplier<R> supplier) {
+            this.supplier = supplier;
+        }
 
         @Override
         public boolean isReady() {
@@ -96,15 +91,11 @@ public class ThreadPoolImpl implements ThreadPool {
         }
 
         @Override
-        public R get() throws LightExecutionException {
+        public R get() throws LightExecutionException, InterruptedException {
             if (!isReady) {
                 synchronized (this) {
                     while (!isReady) {
-                        try {
-                            wait();
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
+                        wait();
                     }
                 }
             }
@@ -116,7 +107,7 @@ public class ThreadPoolImpl implements ThreadPool {
 
         @Override
         public <U> LightFuture<U> thenApply(Function<? super R, ? extends U> f) {
-            LightFutureImpl<U> pending = addPendingTask(this, f);
+            LightFuture<U> pending = createPendingTask(this, f);
             if (!isReady) {
                 synchronized (this) {
                     pendingTasks.add(pending);
@@ -129,9 +120,7 @@ public class ThreadPoolImpl implements ThreadPool {
 
         private void execute() {
             try {
-                result = compute();
-            } catch (LightExecutionException e) {
-                failureCause = e;
+                result = supplier.get();
             } catch (Exception e) {
                 failureCause = new LightExecutionException(e);
             }
@@ -145,9 +134,6 @@ public class ThreadPoolImpl implements ThreadPool {
             synchronized (this) {
                 notifyAll();
             }
-
         }
-
-        abstract R compute() throws LightExecutionException;
     }
 }
