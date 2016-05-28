@@ -2,7 +2,11 @@ package ru.spbau.mit;
 
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
@@ -55,34 +59,32 @@ public class ThreadPoolImplTest {
 
     @Test
     public void testSize() {
-        Set<Long> ids = new HashSet<>();
-        List<LightFuture<Boolean>> tasks = new ArrayList<>();
         ThreadPool pool = new ThreadPoolImpl(10);
-        for (int i = 0; i < 100; ++i) {
-            tasks.add(
-                    pool.submit(
-                            () -> {
-                                try {
-                                    Thread.sleep(100);
-                                } catch (InterruptedException ignored) {
-                                }
-                                return ids.add(Thread.currentThread().getId());
-                            }
-                    )
-            );
+        CyclicBarrier barrier = new CyclicBarrier(10);
+        List<LightFuture<Integer>> futures = new ArrayList<>();
+
+        for (int i = 0; i < 10; i++) {
+            futures.add(pool.submit(
+                    () -> {
+                        try {
+                            return barrier.await() + 1;
+                        } catch (InterruptedException | BrokenBarrierException ignored) {
+                        }
+                        return -1;
+                    }
+            ));
         }
 
-        for (LightFuture lf : tasks) {
+        int expected = -1;
+        for (LightFuture<Integer> future : futures) {
             try {
-                lf.get();
-            } catch (LightExecutionException e) {
-                fail();
-            } catch (InterruptedException e) {
+                int ret = future.get();
+                expected = (expected > ret) ? expected : ret;
+            } catch (LightExecutionException | InterruptedException ignored) {
                 fail();
             }
         }
-
-        assertTrue(ids.size() >= 10);
+        assertEquals(expected, 10);
     }
 
     @Test
